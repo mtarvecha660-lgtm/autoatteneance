@@ -96,13 +96,13 @@
                 <div class="card">
                     <h2 class="text-xl font-bold mb-4">Today's Schedule</h2>
                     <div id="student-schedule" class="space-y-3">
-                        </div>
+                    </div>
                 </div>
                  <div class="flex flex-col gap-6">
                     <div class="card">
                         <h2 class="text-xl font-bold mb-4">My Goals</h2>
                         <div id="student-goals" class="space-y-2">
-                            </div>
+                        </div>
                     </div>
                     <div class="card">
                         <h2 class="text-xl font-bold mb-4">Free Period Smart Tasks</h2>
@@ -111,8 +111,8 @@
                             ✨ Generate Smart Tasks
                         </button>
                         <div id="tasks-loader" class="hidden text-center mt-4">
-                             <div class="spinner h-6 w-6 text-purple-600 mx-auto"></div>
-                             <p class="text-sm text-gray-500 mt-2">Generating ideas...</p>
+                            <div class="spinner h-6 w-6 text-purple-600 mx-auto"></div>
+                            <p class="text-sm text-gray-500 mt-2">Generating ideas...</p>
                         </div>
                         <div id="tasks-output" class="mt-4 space-y-3"></div>
                     </div>
@@ -138,7 +138,7 @@
                     </div>
                 </div>
                 <div id="attendance-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    </div>
+                </div>
                 <div class="text-center mt-6">
                      <button id="generate-qr-btn" class="btn btn-primary">Generate New Attendance QR Code</button>
                 </div>
@@ -311,7 +311,8 @@
         document.querySelectorAll('#logout-btn, #logout-btn-teacher, #logout-btn-admin').forEach(btn => {
             btn.addEventListener('click', () => {
                 currentUser = null;
-                localStorage.removeItem('attendanceData');
+                // Note: We don't clear attendanceData or activeQrTokens on logout
+                // to allow the simulation to persist across logins.
                 document.getElementById('login-form').reset();
                 showView('login-view');
             });
@@ -345,7 +346,7 @@
                 } catch (error) {
                     console.error(`Attempt ${i + 1} failed:`, error.message);
                     if (i === retries - 1) {
-                         return "Sorry, the AI feature is unavailable. Please check your internet connection and API key.";
+                        return "Sorry, the AI feature is unavailable. Please check your internet connection and API key.";
                     }
                     await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
                 }
@@ -416,9 +417,11 @@
             const onScanSuccess = (decodedText, decodedResult) => {
                 try {
                     const data = JSON.parse(decodedText);
-                    const activeToken = localDB.activeQrTokens[data.classId];
                     
-                    // UPDATED: Validation logic now checks for a matching token
+                    // FIX: Read the shared active token from localStorage for the simulation
+                    const allTokens = JSON.parse(localStorage.getItem('activeQrTokens')) || {};
+                    const activeToken = allTokens[data.classId];
+
                     if (data.classId && data.classId === targetClassId && data.token && data.token === activeToken) {
                         html5QrCode.stop().then(() => {
                             modal.classList.add('hidden');
@@ -591,6 +594,12 @@
             // NEW: Generate a unique token and store it
             const token = `${classId}-${Date.now()}-${Math.random()}`;
             localDB.activeQrTokens[classId] = token;
+            
+            // FIX: Share the active token using localStorage for the simulation
+            const allTokens = JSON.parse(localStorage.getItem('activeQrTokens')) || {};
+            allTokens[classId] = token;
+            localStorage.setItem('activeQrTokens', JSON.stringify(allTokens));
+
             console.log(`New token for ${classId}: ${token}`);
 
             // NEW: Embed the token in the QR code data
@@ -639,6 +648,9 @@
                 localDB.attendance = JSON.parse(savedAttendance);
                 console.log("Loaded attendance data from localStorage.");
             }
+            // Clear any old tokens on app start for a clean simulation
+            localStorage.removeItem('activeQrTokens');
+            
             showView('login-view');
             document.getElementById('loading-view').classList.remove('active-view');
         }
