@@ -431,10 +431,10 @@
             const onScanSuccess = (decodedText, decodedResult) => {
                 try {
                     const data = JSON.parse(decodedText);
-                    const allTokens = JSON.parse(localStorage.getItem('activeQrTokens')) || {};
-                    const activeToken = allTokens[data.classId];
 
-                    if (data.classId && data.classId === targetClassId && data.token && data.token === activeToken) {
+                    // PROTOTYPE CHANGE:
+                    // Accept the token embedded in the QR (no localStorage comparison)
+                    if (data.classId && data.classId === targetClassId && data.token) {
                         html5QrCode.stop().then(() => {
                             modal.classList.add('hidden');
                             markAttendance(currentUser.id, data.classId);
