@@ -7,131 +7,203 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
         }
+
+        /* --- View Transition System --- */
         .view {
             display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: absolute; /* Needed for smooth transitions */
+            width: 100%;
+            padding: 1rem;
         }
         .active-view {
-            display: block;
+            display: block; /* Will be toggled by JS */
+            opacity: 1;
+            transform: translateY(0);
+            position: relative;
         }
+        /* Ensure flex containers get 'display: flex' */
+        #student-view.active-view, #admin-view.active-view, #teacher-view.active-view {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Glassmorphism Card Style --- */
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 1.5rem;
+            border-radius: 1.5rem; /* Larger radius */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+        }
+        
+        .card h1, .card h2, .card h3 {
+             color: #fff;
+        }
+        .card p, .card span, .card label {
+            color: #e0e0e0;
+        }
+
+        /* --- Enhanced Button Styles --- */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 700; /* Bolder */
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(-1px) scale(0.99); }
+        
+        .btn-primary { background: linear-gradient(45deg, #3b82f6, #6366f1); }
+        .btn-secondary { background: linear-gradient(45deg, #8b5cf6, #d946ef); }
+        .btn-danger { background: linear-gradient(45deg, #ef4444, #f97316); }
+
+        /* --- Input Fields --- */
+        input[type="text"], input[type="password"], select {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        input::placeholder { color: #ccc; }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- Status Indicators --- */
         .status-dot {
             height: 12px;
             width: 12px;
             border-radius: 50%;
             display: inline-block;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 8px 2px rgba(0,0,0,0.2);
         }
-        .status-present {
-            background-color: #22c55e; /* green-500 */
-        }
-        .status-absent {
-            background-color: #ef4444; /* red-500 */
-        }
+        .status-present { background-color: #4ade80; box-shadow: 0 0 10px #4ade80; }
+        .status-absent { background-color: #f87171; box-shadow: 0 0 10px #f87171; }
 
-        /* Replaced Tailwind @apply with plain CSS so CDN-only setup works */
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            color: #fff;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.15s ease;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.06);
-            gap: 0.5rem;
+        /* --- Animations --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .btn:active { transform: scale(.99); }
-        .btn-primary { background-color: #2563eb; }
-        .btn-primary:hover { background-color: #1e40af; }
-        .btn-secondary { background-color: #7c3aed; }
-        .btn-secondary:hover { background-color: #5b21b6; }
-
-        .card {
-            background: #fff;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(2,6,23,0.06);
-            border: 1px solid rgba(15,23,42,0.04);
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out forwards;
         }
-
-        .spinner {
-            animation: spin 1s linear infinite;
-        }
+        .spinner { animation: spin 1s linear infinite; }
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-
-        /* Simple helper to hide elements via class toggling */
         .hidden { display: none !important; }
+        
+        /* --- Modal Backdrop --- */
+        .modal-backdrop {
+            background-color: rgba(10, 5, 30, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .modal-content {
+             background: linear-gradient(135deg, #4b5563, #1f2937); /* Darker gradient for modals */
+        }
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="antialiased text-gray-200">
 
-    <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div id="app" class="min-h-screen w-full flex flex-col items-center justify-center p-4 relative overflow-hidden">
 
         <div id="loading-view" class="view active-view text-center">
-            <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-10 w-10 text-white mx-auto" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <p id="loading-text" class="mt-4 text-lg font-semibold text-gray-600">Initializing System...</p>
+            <p id="loading-text" class="mt-4 text-lg font-semibold text-gray-300">Initializing System...</p>
         </div>
 
         <div id="login-view" class="view w-full max-w-sm">
-            <div class="card text-center">
-                <h1 class="text-3xl font-bold text-blue-700 mb-2">Smart Campus</h1>
-                <p class="text-gray-500 mb-6">Please sign in to your account</p>
-                <form id="login-form" class="space-y-4">
+            <div class="card animate-fadeInUp">
+                <div class="text-center">
+                    <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">Smart Campus</h1>
+                    <p class="text-gray-300 mb-8">Sign in to your dashboard</p>
+                </div>
+                <form id="login-form" class="space-y-6">
                     <div>
-                        <input type="text" id="username" placeholder="Username (e.g., a, b, dr, admin)" class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <input type="text" id="username" placeholder="Username (e.g., a, b, dr, admin)" class="w-full shadow-sm" required>
                     </div>
                     <div>
-                        <input type="password" id="password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <input type="password" id="password" placeholder="Password" class="w-full shadow-sm" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-full !py-3 !text-base">
+                        <svg xmlns="http://www.w.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        Sign In Securely
+                    </button>
                 </form>
-                <p id="login-error" class="text-red-500 text-sm mt-4 h-4"></p>
+                <p id="login-error" class="text-red-400 text-sm mt-4 h-4 text-center"></p>
             </div>
         </div>
 
-        <div id="student-view" class="view w-full max-w-4xl">
-            <header class="card mb-4 flex justify-between items-center">
+        <div id="student-view" class="view w-full max-w-5xl flex-col" style="display: none;">
+            <header class="card mb-6 flex justify-between items-center animate-fadeInUp" style="animation-delay: 0.1s;">
                 <div>
-                    <h1 class="text-2xl font-bold">Student Dashboard</h1>
-                    <p class="text-gray-600">Welcome, <span id="student-name" class="font-semibold"></span>!</p>
+                    <h1 class="text-3xl font-bold">Student Dashboard</h1>
+                    <p class="text-gray-300">Welcome, <span id="student-name" class="font-semibold text-white"></span>!</p>
                 </div>
-                <button id="logout-btn" class="btn" style="background:#ef4444" >Logout</button>
+                <button id="logout-btn" class="btn btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Logout
+                </button>
             </header>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="card">
-                    <h2 class="text-xl font-bold mb-4">Today's Schedule</h2>
-                    <div id="student-schedule" class="space-y-3">
-                    </div>
+            <div class="grid md:grid-cols-2 gap-6 w-full">
+                <div class="card animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        Today's Schedule
+                    </h2>
+                    <div id="student-schedule" class="space-y-4"></div>
                 </div>
-                 <div class="flex flex-col gap-6">
-                    <div class="card">
-                        <h2 class="text-xl font-bold mb-4">My Goals</h2>
-                        <div id="student-goals" class="space-y-2">
-                        </div>
+                <div class="flex flex-col gap-6">
+                    <div class="card animate-fadeInUp" style="animation-delay: 0.3s;">
+                        <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                            My Goals
+                        </h2>
+                        <div id="student-goals" class="space-y-3"></div>
                     </div>
-                    <div class="card">
-                        <h2 class="text-xl font-bold mb-4">Free Period Smart Tasks</h2>
-                        <p class="text-sm text-gray-500 mb-4">AI-powered suggestions based on your goals and interests.</p>
+                    <div class="card animate-fadeInUp" style="animation-delay: 0.4s;">
+                        <h2 class="text-2xl font-bold mb-4">Free Period Smart Tasks</h2>
+                        <p class="text-sm text-gray-300 mb-4">AI-powered suggestions based on your goals and interests.</p>
                         <button id="generate-tasks-btn" class="btn btn-secondary w-full">
                             ✨ Generate Smart Tasks
                         </button>
                         <div id="tasks-loader" class="hidden text-center mt-4">
-                            <div class="spinner h-6 w-6 text-purple-600 mx-auto"></div>
-                            <p class="text-sm text-gray-500 mt-2">Generating ideas...</p>
+                            <div class="spinner h-6 w-6 text-fuchsia-400 mx-auto"></div>
+                            <p class="text-sm text-gray-400 mt-2">Generating ideas...</p>
                         </div>
                         <div id="tasks-output" class="mt-4 space-y-3"></div>
                     </div>
@@ -139,91 +211,98 @@
             </div>
         </div>
 
-        <div id="teacher-view" class="view w-full max-w-5xl">
-            <header class="card mb-4 flex justify-between items-center">
+        <div id="teacher-view" class="view w-full max-w-6xl flex-col" style="display: none;">
+            <header class="card mb-6 flex justify-between items-center animate-fadeInUp" style="animation-delay: 0.1s;">
                 <div>
-                    <h1 class="text-2xl font-bold">Teacher Dashboard</h1>
-                    <p class="text-gray-600">Welcome, <span id="teacher-name" class="font-semibold"></span>!</p>
+                    <h1 class="text-3xl font-bold">Teacher Dashboard</h1>
+                    <p class="text-gray-300">Welcome, <span id="teacher-name" class="font-semibold text-white"></span>!</p>
                 </div>
-                <button id="logout-btn-teacher" class="btn" style="background:#ef4444">Logout</button>
+                <button id="logout-btn-teacher" class="btn btn-danger">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Logout
+                </button>
             </header>
-            <div class="card">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Real-time Attendance</h2>
-                    <div class="flex items-center space-x-2">
-                        <label for="class-select" class="font-semibold">Current Class:</label>
-                        <select id="class-select" class="p-2 border rounded-lg shadow-sm">
-                           </select>
+            <div class="card w-full animate-fadeInUp" style="animation-delay: 0.2s;">
+                <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold">Real-time Attendance</h2>
+                    <div class="flex items-center space-x-2 bg-white/10 p-2 rounded-lg">
+                        <label for="class-select" class="font-semibold text-sm">Current Class:</label>
+                        <select id="class-select" class="p-2 border-0 shadow-sm !rounded-md"></select>
                     </div>
                 </div>
-                <div id="attendance-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                </div>
-                <div class="text-center mt-6">
-                     <button id="generate-qr-btn" class="btn btn-primary">Generate New Attendance QR Code</button>
+                <div id="attendance-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+                <div class="text-center mt-8 border-t border-white/10 pt-6">
+                    <button id="generate-qr-btn" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M12 20v-1m6.364-1.636l-.707-.707M4.636 15.364l.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        Generate New Attendance QR Code
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div id="admin-view" class="view w-full max-w-4xl">
-            <header class="card mb-4 flex justify-between items-center">
-                 <div>
-                    <h1 class="text-2xl font-bold">Administrator Dashboard</h1>
-                    <p class="text-gray-600">Welcome, <span id="admin-name" class="font-semibold"></span>!</p>
+        <div id="admin-view" class="view w-full max-w-5xl flex-col" style="display: none;">
+             <header class="card mb-6 flex justify-between items-center animate-fadeInUp" style="animation-delay: 0.1s;">
+                <div>
+                    <h1 class="text-3xl font-bold">Administrator Dashboard</h1>
+                    <p class="text-gray-300">Welcome, <span id="admin-name" class="font-semibold text-white"></span>!</p>
                 </div>
-                 <button id="logout-btn-admin" class="btn" style="background:#ef4444">Logout</button>
+                <button id="logout-btn-admin" class="btn btn-danger">
+                    <svg xmlns="http://www.w.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Logout
+                </button>
             </header>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="card text-center">
-                    <h3 class="text-lg font-semibold text-gray-500">Total Students</h3>
-                    <p id="total-students" class="text-4xl font-bold text-blue-600">0</p>
+            <div class="grid md:grid-cols-3 gap-6 w-full">
+                <div class="card text-center animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <h3 class="text-lg font-semibold text-gray-300">Total Students</h3>
+                    <p id="total-students" class="text-5xl font-extrabold text-white mt-2">0</p>
                 </div>
-                <div class="card text-center">
-                    <h3 class="text-lg font-semibold text-gray-500">Total Teachers</h3>
-                    <p id="total-teachers" class="text-4xl font-bold text-blue-600">0</p>
+                <div class="card text-center animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <h3 class="text-lg font-semibold text-gray-300">Total Teachers</h3>
+                    <p id="total-teachers" class="text-5xl font-extrabold text-white mt-2">0</p>
                 </div>
-                <div class="card text-center">
-                    <h3 class="text-lg font-semibold text-gray-500">Overall Attendance</h3>
-                    <p id="overall-attendance" class="text-4xl font-bold text-green-500">0%</p>
+                <div class="card text-center animate-fadeInUp" style="animation-delay: 0.4s;">
+                    <h3 class="text-lg font-semibold text-gray-300">Overall Attendance</h3>
+                    <p id="overall-attendance" class="text-5xl font-extrabold text-green-400 mt-2">0%</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="qr-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center relative max-w-sm w-full">
-            <button id="close-qr-modal" aria-label="Close QR modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-2">Scan to Mark Attendance</h2>
-            <p id="qr-modal-class-info" class="text-gray-600 mb-4"></p>
-            <div id="qrcode-container" class="flex justify-center p-4 bg-gray-100 rounded-lg">
-                 <canvas id="qrcode"></canvas>
+    <div id="qr-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center hidden z-50">
+        <div class="modal-content p-8 rounded-2xl shadow-2xl text-center relative max-w-sm w-full animate-fadeInUp">
+            <button id="close-qr-modal" aria-label="Close QR modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
+            <h2 class="text-2xl font-bold mb-2 text-white">Scan to Mark Attendance</h2>
+            <p id="qr-modal-class-info" class="text-gray-300 mb-4"></p>
+            <div id="qrcode-container" class="flex justify-center p-4 bg-white rounded-lg">
+                <canvas id="qrcode"></canvas>
             </div>
-            <p class="mt-4 text-sm text-gray-500">This QR code is now active. Generating a new one will disable this one.</p>
+            <p class="mt-4 text-sm text-gray-400">This QR code is now active. Generating a new one will disable this one.</p>
         </div>
     </div>
 
-    <div id="goal-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden z-50">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl relative max-w-lg w-full">
-            <button id="close-goal-modal" aria-label="Close goal modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-            <h2 class="text-2xl font-bold mb-2">✨ AI-Powered Goal Breakdown</h2>
-            <p id="goal-modal-title" class="text-gray-600 mb-4"></p>
+    <div id="goal-modal" class="fixed inset-0 modal-backdrop flex items-center justify-center hidden z-50">
+        <div class="modal-content p-8 rounded-2xl shadow-2xl relative max-w-lg w-full animate-fadeInUp">
+            <button id="close-goal-modal" aria-label="Close goal modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-3xl">&times;</button>
+            <h2 class="text-2xl font-bold mb-2 text-white">✨ AI-Powered Goal Breakdown</h2>
+            <p id="goal-modal-title" class="text-gray-300 mb-4"></p>
             <div id="goal-modal-loader" class="hidden text-center my-4">
-                <div class="spinner h-8 w-8 text-purple-600 mx-auto"></div>
-                <p class="text-sm text-gray-500 mt-2">Breaking it down for you...</p>
+                <div class="spinner h-8 w-8 text-fuchsia-400 mx-auto"></div>
+                <p class="text-sm text-gray-400 mt-2">Breaking it down for you...</p>
             </div>
-            <div id="goal-modal-content" class="text-gray-700 space-y-2"></div>
+            <div id="goal-modal-content" class="text-gray-300 space-y-2"></div>
         </div>
     </div>
 
     <div id="scanner-modal" class="fixed inset-0 bg-gray-900 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl text-center relative max-w-md w-full">
-            <button id="close-scanner-modal" aria-label="Close scanner modal" class="absolute top-2 right-3 text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-            <h2 class="text-xl font-bold mb-4">Scan Attendance QR Code</h2>
+        <div class="bg-white p-6 rounded-2xl shadow-2xl text-center relative max-w-md w-full animate-fadeInUp">
+            <button id="close-scanner-modal" aria-label="Close scanner modal" class="absolute top-2 right-3 text-gray-600 hover:text-gray-900 text-3xl">&times;</button>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Scan Attendance QR Code</h2>
             <div id="qr-reader" class="w-full border-4 border-gray-300 rounded-lg overflow-hidden aspect-square max-w-xs mx-auto"></div>
             <p class="mt-4 text-sm text-gray-500">Point your camera at the QR code shown by the teacher.</p>
         </div>
     </div>
     
-    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-all duration-300 ease-in-out opacity-0 hidden flex items-center gap-3 z-[100]">
+    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-all duration-300 ease-in-out opacity-0 translate-y-4 hidden items-center gap-3 z-[100]">
         <span id="toast-icon"></span>
         <span id="toast-message"></span>
     </div>
@@ -238,22 +317,15 @@
         };
         
         // --- CONFIG ---
-        // WARNING: Do NOT put real API keys in frontend code.
-        // To use Gemini (or any LLM) securely, create a backend endpoint that holds your key.
-        // Set GEMINI_API_KEY to null here for local mock behavior, and implement a backend route to proxy requests.
-        const GEMINI_API_KEY = null; // set to null for mock/fallback
+        const GEMINI_API_KEY = null; 
 
         // --- MOCK DATA SETUP ---
         function setupInitialData() {
-            console.log("Setting up initial data locally...");
             localDB.users = {
-                // Students
                 'student1': { username: 'a', password: '123', name: 'Alice Johnson', role: 'student', profile: { interests: ['Web Development', 'AI'], goals: ['Build a portfolio website', 'Learn advanced CSS animations'] } },
                 'student2': { username: 'b', password: '123', name: 'Bob Williams', role: 'student', profile: { interests: ['Data Science'], goals: ['Learn Python for data analysis'] } },
                 'student3': { username: 'c', password: '123', name: 'Charlie Brown', role: 'student', profile: { interests: ['Mobile Development'], goals: ['Create a simple Android app'] } },
-                // Teacher
                 'teacher1': { username: 'dr', password: 'pass', name: 'Dr. Evelyn Reed', role: 'teacher' },
-                // Admin
                 'admin1': { username: 'admin', password: 'pass', name: 'Principal Smith', role: 'admin' }
             };
             localDB.timetable = {
@@ -265,18 +337,38 @@
             };
             localDB.attendance = {}; 
             localDB.activeQrTokens = {};
-            console.log("Initial local data setup complete.");
         }
 
         // --- GLOBAL STATE ---
         let currentUser = null;
         let html5QrCode = null;
 
-        // --- UI HELPER ---
+        // --- UI HELPER (with animation) ---
         function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active-view'));
+            const currentActive = document.querySelector('.active-view');
+            if (currentActive) {
+                currentActive.classList.remove('active-view');
+                // Hide after transition ends to prevent layout shifts
+                setTimeout(() => {
+                    if (!currentActive.classList.contains('active-view')) {
+                         // Only hide if it's not the active one (quick navigation case)
+                        currentActive.style.display = 'none';
+                    }
+                }, 500);
+            }
+            
             const view = document.getElementById(viewId);
-            if (view) view.classList.add('active-view');
+            if (view) {
+                // Set display type based on element ID for flex layouts
+                const displayStyle = (viewId === 'student-view' || viewId === 'teacher-view' || viewId === 'admin-view') ? 'flex' : 'block';
+                view.style.display = displayStyle;
+                
+                // Use a tiny timeout to allow the display property to apply before adding the class
+                // This ensures the CSS transition triggers correctly.
+                setTimeout(() => {
+                    view.classList.add('active-view');
+                }, 10);
+            }
         }
 
         // --- TOAST NOTIFICATION ---
@@ -287,7 +379,7 @@
             const toastIcon = document.getElementById('toast-icon');
 
             toastMessage.textContent = message;
-            toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'opacity-0');
+            toast.classList.remove('hidden', 'bg-green-500', 'bg-red-500', 'opacity-0', 'translate-y-4');
 
             if (type === 'success') {
                 toast.classList.add('bg-green-500');
@@ -296,14 +388,15 @@
                 toast.classList.add('bg-red-500');
                 toastIcon.textContent = '✖️';
             }
-
-            // reset timer
+            
             if (toastTimeout) clearTimeout(toastTimeout);
-            toast.classList.remove('opacity-0', 'hidden');
-            toast.style.opacity = '1';
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
 
             toastTimeout = setTimeout(() => {
-                toast.style.opacity = '0';
+                toast.classList.add('opacity-0', 'translate-y-4');
                 setTimeout(() => toast.classList.add('hidden'), 300);
             }, 3000);
         }
@@ -349,10 +442,8 @@
 
         // --- GEMINI API INTEGRATION (SAFE FALLBACK) ---
         async function callGeminiAPI(prompt, retries = 1) {
-            // If GEMINI_API_KEY is not set, return a safe mocked response tailored to the prompt.
             if (!GEMINI_API_KEY) {
                 console.warn("GEMINI_API_KEY not set. Returning mock response.");
-                // Simple heuristics for two prompt types used in the app:
                 if (prompt.toLowerCase().includes("act as a helpful academic advisor")) {
                     return `1. **Mini Project:** Build a 1-hour mini portfolio page — include a short project description and one interactive demo.\n2. **Data Exercise:** Analyze a small dataset in a spreadsheet and create a 3-bullet summary of insights.\n3. **Skill Sprint:** Follow a 20-minute tutorial on a tool (e.g., Git/GitHub), then write a short README documenting what you learned.`;
                 }
@@ -361,9 +452,6 @@
                 }
                 return "AI feature is not configured. To enable it, create a secure backend that proxies requests to the LLM and set GEMINI_API_KEY on the server.";
             }
-
-            // If a real API key were provided (NOT recommended in frontend), you'd implement the request here.
-            // For security, keep keys on server-side and call your server endpoint instead.
             return "AI feature is running via backend (not configured in this demo).";
         }
 
@@ -377,13 +465,13 @@
                 if (!cls.students.includes(currentUser.id)) return;
                 const isFreePeriod = cls.subject === 'Free Period';
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-lg flex justify-between items-center ${isFreePeriod ? 'bg-yellow-100 border-yellow-300' : 'bg-blue-100 border-blue-300'} border-l-4`;
+                card.className = `p-4 rounded-lg flex justify-between items-center bg-white/5 border-l-4 ${isFreePeriod ? 'border-amber-400' : 'border-blue-400'}`;
                 card.innerHTML = `
                     <div>
-                        <p class="font-bold">${cls.subject}</p>
-                        <p class="text-sm text-gray-600">${cls.time}</p>
+                        <p class="font-bold text-white">${cls.subject}</p>
+                        <p class="text-sm text-gray-300">${cls.time}</p>
                     </div>
-                    ${!isFreePeriod ? `<button data-class-id="${cls.classId}" class="scan-qr-btn btn btn-primary text-sm">Mark Attendance</button>` : '<span class="text-sm font-semibold text-yellow-700">Free Period</span>'}
+                    ${!isFreePeriod ? `<button data-class-id="${cls.classId}" class="scan-qr-btn btn btn-primary text-sm">Mark Attendance</button>` : '<span class="text-sm font-semibold text-amber-400">Free Period</span>'}
                 `;
                 scheduleEl.appendChild(card);
             });
@@ -399,21 +487,22 @@
             if (currentUser.profile && currentUser.profile.goals && currentUser.profile.goals.length > 0) {
                 currentUser.profile.goals.forEach(goal => {
                     const goalEl = document.createElement('div');
-                    goalEl.className = 'bg-gray-50 p-3 rounded-lg border flex justify-between items-center';
+                    goalEl.className = 'bg-white/5 p-3 rounded-lg border border-white/10 flex justify-between items-center';
                     goalEl.innerHTML = `
-                        <p class="text-sm font-medium">${goal}</p>
-                        <button data-goal="${goal}" class="breakdown-goal-btn text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-1 rounded-md hover:bg-purple-200">✨ Break down</button>
+                        <p class="text-sm font-medium text-gray-200">${goal}</p>
+                        <button data-goal="${goal}" class="breakdown-goal-btn text-xs bg-fuchsia-500/20 text-fuchsia-300 font-semibold px-2 py-1 rounded-md hover:bg-fuchsia-500/40 transition-colors">✨ Break down</button>
                     `;
                     goalsEl.appendChild(goalEl);
                 });
             } else {
-                goalsEl.innerHTML = `<p class="text-sm text-gray-500">No goals set yet.</p>`;
+                goalsEl.innerHTML = `<p class="text-sm text-gray-400">No goals set yet.</p>`;
             }
         }
 
         document.getElementById('student-schedule').addEventListener('click', (e) => {
-            if (e.target.classList.contains('scan-qr-btn')) {
-                const classId = e.target.dataset.classId;
+            const button = e.target.closest('.scan-qr-btn');
+            if (button) {
+                const classId = button.dataset.classId;
                 startScanner(classId);
             }
         });
@@ -422,7 +511,7 @@
             const modal = document.getElementById('scanner-modal');
             modal.classList.remove('hidden');
 
-            if (html5QrCode) {
+            if (html5QrCode && html5QrCode.isScanning) {
                 try { await html5QrCode.stop(); } catch (err) { /* ignore stop errors */ }
             }
 
@@ -431,43 +520,37 @@
             const onScanSuccess = (decodedText, decodedResult) => {
                 try {
                     const data = JSON.parse(decodedText);
-
-                    // PROTOTYPE CHANGE:
-                    // Accept the token embedded in the QR (no localStorage comparison)
                     if (data.classId && data.classId === targetClassId && data.token) {
                         html5QrCode.stop().then(() => {
                             modal.classList.add('hidden');
                             markAttendance(currentUser.id, data.classId);
                         }).catch(err => {
-                            console.error("Failed to stop scanner after success.", err);
                             modal.classList.add('hidden');
                             markAttendance(currentUser.id, data.classId);
                         });
                     } else if (data.classId !== targetClassId) {
                         showToast('Incorrect QR Code. This is for another class.', 'error');
                     } else {
-                        showToast('This QR code has expired or is invalid. Please scan the new one.', 'error');
+                        showToast('This QR code has expired or is invalid.', 'error');
                     }
                 } catch (e) {
-                    console.error("Failed to parse QR code data", e);
                     showToast("Invalid QR Code format.", 'error');
                 }
             };
 
-            const onScanFailure = (error) => { /* frequent failures ignored */ };
+            const onScanFailure = (error) => {};
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
                 .catch((err) => {
-                    console.error(`Unable to start scanning, error=${err}`);
                     showToast('Could not start camera. Please grant permissions.', 'error');
                     modal.classList.add('hidden');
                 });
         }
         
         document.getElementById('close-scanner-modal').addEventListener('click', async () => {
-            if (html5QrCode) {
-                try { await html5QrCode.stop(); } catch (err) { console.error("Failed to stop scanner on close.", err); }
+            if (html5QrCode && html5QrCode.isScanning) {
+                try { await html5QrCode.stop(); } catch (err) {}
             }
             document.getElementById('scanner-modal').classList.add('hidden');
         });
@@ -476,9 +559,7 @@
             const today = new Date().toISOString().split('T')[0];
             const attendanceId = `${today}_${classId}_${studentId}`;
             localDB.attendance[attendanceId] = { studentId, classId, date: today, timestamp: new Date().toISOString(), status: 'present' };
-            
             localStorage.setItem('attendanceData', JSON.stringify(localDB.attendance));
-            
             showToast('Attendance marked successfully!');
 
             const teacherView = document.getElementById('teacher-view');
@@ -505,18 +586,18 @@
             
             const result = await callGeminiAPI(prompt);
             
-            // minimal formatting for mock responses
             const formatted = result
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-purple-700">$1</strong>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-fuchsia-300">$1</strong>')
                 .replace(/\n/g, '<br>');
-            output.innerHTML = `<div class="prose">${formatted}</div>`;
+            output.innerHTML = `<div class="prose text-gray-300">${formatted}</div>`;
             loader.classList.add('hidden');
             btn.disabled = false;
         });
 
         document.getElementById('student-goals').addEventListener('click', (e) => {
-            if (e.target.classList.contains('breakdown-goal-btn')) {
-                const goal = e.target.dataset.goal;
+             const button = e.target.closest('.breakdown-goal-btn');
+            if (button) {
+                const goal = button.dataset.goal;
                 breakDownGoal(goal);
             }
         });
@@ -536,7 +617,7 @@
             
             const formattedResult = result.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
                 return `<div class="flex items-start gap-3 mt-2">
-                            <span class="flex-shrink-0 bg-purple-100 text-purple-700 font-bold w-6 h-6 text-sm rounded-full flex items-center justify-center">${line.split('.')[0]}</span>
+                            <span class="flex-shrink-0 bg-fuchsia-500/30 text-fuchsia-200 font-bold w-6 h-6 text-sm rounded-full flex items-center justify-center">${line.split('.')[0]}</span>
                             <p>${line.replace(/^\d+\.\s*/, '')}</p>
                         </div>`;
             }).join('');
@@ -570,10 +651,9 @@
                 loadAttendanceForClass(classes[0].classId);
                 classSelect.value = classes[0].classId;
             } else {
-                document.getElementById('attendance-grid').innerHTML = '<p class="text-sm text-gray-500">No classes assigned.</p>';
+                document.getElementById('attendance-grid').innerHTML = '<p class="text-sm text-gray-400 col-span-full">No classes assigned.</p>';
             }
             
-            // assign handlers directly to avoid duplicates
             classSelect.onchange = (e) => loadAttendanceForClass(e.target.value);
             document.getElementById('generate-qr-btn').onclick = generateQrCode;
             showView('teacher-view');
@@ -599,12 +679,12 @@
                     const isPresent = localDB.attendance[attendanceId]?.status === 'present';
 
                     const studentCard = document.createElement('div');
-                    studentCard.className = 'p-3 rounded-lg border flex items-center space-x-3 bg-gray-50';
+                    studentCard.className = 'p-3 rounded-lg border border-white/10 flex items-center space-x-3 bg-white/5';
                     studentCard.innerHTML = `
                         <span class="status-dot ${isPresent ? 'status-present' : 'status-absent'}"></span>
                         <div>
-                            <p class="font-semibold text-sm">${studentData.name}</p>
-                            <p class="text-xs text-gray-500">${studentId}</p>
+                            <p class="font-semibold text-sm text-white">${studentData.name}</p>
+                            <p class="text-xs text-gray-400">${studentId}</p>
                         </div>
                     `;
                     attendanceGrid.appendChild(studentCard);
@@ -626,18 +706,14 @@
             allTokens[classId] = token;
             localStorage.setItem('activeQrTokens', JSON.stringify(allTokens));
 
-            console.log(`New token for ${classId}: ${token}`);
-
             const qrData = JSON.stringify({ classId: classId, token: token });
 
-            // clear previous canvas (if any)
             const canvas = document.getElementById('qrcode');
             const ctx = canvas.getContext ? canvas.getContext('2d') : null;
             if (ctx) ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            QRCode.toCanvas(canvas, qrData, { width: 200 }, function (error) {
+            QRCode.toCanvas(canvas, qrData, { width: 220, margin: 1 }, function (error) {
                 if (error) {
-                    console.error(error);
                     showToast('Failed to generate QR code.', 'error');
                     return;
                 }
@@ -656,11 +732,9 @@
                 if (user.role === 'teacher') teacherCount++;
             });
             
-            // Count only today's attendances
             const today = new Date().toISOString().split('T')[0];
             const presentCount = Object.values(localDB.attendance).filter(a => a.date === today && a.status === 'present').length;
 
-            // total possible attendances is sum of students in classes that have a teacher (for today)
             const classesWithTeachers = localDB.timetable.classes.filter(c => c.teacherId !== null);
             const totalPossibleAttendances = classesWithTeachers.reduce((sum, c) => sum + (c.students?.length || 0), 0);
 
@@ -680,21 +754,18 @@
             if (savedAttendance) {
                 try {
                     localDB.attendance = JSON.parse(savedAttendance);
-                    console.log("Loaded attendance data from localStorage.");
                 } catch (e) {
-                    console.warn("Failed to parse saved attendance data; starting fresh.");
                     localDB.attendance = {};
                 }
             }
-            // start with no active tokens in localStorage for a clean simulation session
             localStorage.removeItem('activeQrTokens');
             
-            showView('login-view');
-            document.getElementById('loading-view').classList.remove('active-view');
+            setTimeout(() => {
+                showView('login-view');
+            }, 500); // Small delay for effect
         }
         initializeApp();
 
     </script>
-
 </body>
 </html>
