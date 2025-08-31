@@ -243,57 +243,6 @@
         // Set GEMINI_API_KEY to null here for local mock behavior, and implement a backend route to proxy requests.
         const GEMINI_API_KEY = null; // set to null for mock/fallback
 
-        // --- FIREBASE (Firestore) CONFIG - replace with your project values ---
-        import { initializeApp as fbInit } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import {
-          getFirestore,
-          collection,
-          doc,
-          setDoc,
-          getDocs
-        } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-        // Replace placeholders below with values from Firebase Console -> Project settings
-        const FIREBASE_CONFIG = {
-          apiKey: "AIzaSyAPOaNG6msvl4erHmdBewjAr-DS8w34z9A",
-          authDomain: "autoatt-2f5eb.firebaseapp.com",
-          projectId: "autoatt-2f5eb",
-          // ...other fields if present (optional)...
-        };
-
-        // initialize Firebase & Firestore
-        let db = null;
-        try {
-          const fbApp = fbInit(FIREBASE_CONFIG);
-          db = getFirestore(fbApp);
-          console.log("Firestore initialized (client).");
-        } catch (e) {
-          console.warn("Firestore init failed or config missing. Offline/mock mode.", e);
-        }
-
-        // Firestore helpers (minimal, prototype-friendly)
-        async function syncAttendanceToFirestore(attendanceId, record) {
-          if (!db) return;
-          try {
-            await setDoc(doc(db, "attendance", attendanceId), record);
-          } catch (err) {
-            console.warn("Failed to write attendance to Firestore:", err);
-          }
-        }
-
-        async function loadAttendanceFromFirestore() {
-          if (!db) return {};
-          try {
-            const snapshot = await getDocs(collection(db, "attendance"));
-            const serverData = {};
-            snapshot.forEach(d => { serverData[d.id] = d.data(); });
-            return serverData;
-          } catch (err) {
-            console.warn("Failed to read attendance from Firestore:", err);
-            return {};
-          }
-        }
-
         // --- MOCK DATA SETUP ---
         function setupInitialData() {
             console.log("Setting up initial data locally...");
@@ -483,7 +432,8 @@
                 try {
                     const data = JSON.parse(decodedText);
 
-                    // PROTOTYPE: accept token embedded in the QR so scanning works across devices
+                    // PROTOTYPE CHANGE:
+                    // Accept the token embedded in the QR (no localStorage comparison)
                     if (data.classId && data.classId === targetClassId && data.token) {
                         html5QrCode.stop().then(() => {
                             modal.classList.add('hidden');
@@ -493,13 +443,10 @@
                             modal.classList.add('hidden');
                             markAttendance(currentUser.id, data.classId);
                         });
-                        return;
-                    }
-
-                    if (data.classId && data.classId !== targetClassId) {
+                    } else if (data.classId !== targetClassId) {
                         showToast('Incorrect QR Code. This is for another class.', 'error');
                     } else {
-                        showToast('This QR code is invalid or expired. Ask the teacher to generate a new one.', 'error');
+                        showToast('This QR code has expired or is invalid. Please scan the new one.', 'error');
                     }
                 } catch (e) {
                     console.error("Failed to parse QR code data", e);
@@ -507,7 +454,7 @@
                 }
             };
 
-            const onScanFailure = (error) => { /* ignored - frequent */ };
+            const onScanFailure = (error) => { /* frequent failures ignored */ };
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
             html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
@@ -528,15 +475,10 @@
         function markAttendance(studentId, classId) {
             const today = new Date().toISOString().split('T')[0];
             const attendanceId = `${today}_${classId}_${studentId}`;
-            const record = { studentId, classId, date: today, timestamp: new Date().toISOString(), status: 'present' };
-
-            // Save locally
-            localDB.attendance[attendanceId] = record;
+            localDB.attendance[attendanceId] = { studentId, classId, date: today, timestamp: new Date().toISOString(), status: 'present' };
+            
             localStorage.setItem('attendanceData', JSON.stringify(localDB.attendance));
-
-            // Sync to Firestore (prototype)
-            syncAttendanceToFirestore(attendanceId, record);
-
+            
             showToast('Attendance marked successfully!');
 
             const teacherView = document.getElementById('teacher-view');
@@ -732,29 +674,21 @@
         }
 
         // --- INITIALIZE THE APP ---
-        async function initializeApp() {
+        function initializeApp() {
             setupInitialData();
-
-            // load localStorage first
-            let localSaved = {};
             const savedAttendance = localStorage.getItem('attendanceData');
             if (savedAttendance) {
-                try { localSaved = JSON.parse(savedAttendance); } catch (e) { localSaved = {}; }
+                try {
+                    localDB.attendance = JSON.parse(savedAttendance);
+                    console.log("Loaded attendance data from localStorage.");
+                } catch (e) {
+                    console.warn("Failed to parse saved attendance data; starting fresh.");
+                    localDB.attendance = {};
+                }
             }
-
-            // try fetch attendance from Firestore and merge (server wins)
-            try {
-                const serverAttendance = await loadAttendanceFromFirestore();
-                localDB.attendance = { ...localSaved, ...serverAttendance };
-                localStorage.setItem('attendanceData', JSON.stringify(localDB.attendance));
-                console.log("Loaded attendance data (merged) from Firestore/localStorage.");
-            } catch (e) {
-                localDB.attendance = localSaved;
-            }
-
-            // (optional) keep tokens cleared for a clean session
+            // start with no active tokens in localStorage for a clean simulation session
             localStorage.removeItem('activeQrTokens');
-
+            
             showView('login-view');
             document.getElementById('loading-view').classList.remove('active-view');
         }
