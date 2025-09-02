@@ -1,0 +1,127 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow-x: hidden;
+}
+
+/* --- View Transition System --- */
+.view {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: absolute; /* Needed for smooth transitions */
+    width: 100%;
+    padding: 1rem;
+}
+.active-view {
+    display: block; /* Will be toggled by JS */
+    opacity: 1;
+    transform: translateY(0);
+    position: relative;
+}
+/* Ensure flex containers get 'display: flex' */
+#student-view.active-view, #admin-view.active-view, #teacher-view.active-view, #event-manager-view.active-view {
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Glassmorphism Card Style --- */
+.card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 1.5rem;
+    border-radius: 1.5rem; /* Larger radius */
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+.card h1, .card h2, .card h3 {
+     color: #fff;
+}
+.card p, .card span, .card label {
+    color: #e0e0e0;
+}
+
+/* --- Enhanced Button Styles --- */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 700; /* Bolder */
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+}
+.btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+.btn:active { transform: translateY(-1px) scale(0.99); }
+
+.btn-primary { background: linear-gradient(45deg, #3b82f6, #6366f1); }
+.btn-secondary { background: linear-gradient(45deg, #8b5cf6, #d946ef); }
+.btn-danger { background: linear-gradient(45deg, #ef4444, #f97316); }
+.btn-success { background: linear-gradient(45deg, #22c55e, #14b8a6); }
+
+/* --- Input Fields --- */
+input, select, textarea {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+input::placeholder, textarea::placeholder { color: #ccc !important; }
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+/* Fix for date/time input icon colors */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* --- Status Indicators --- */
+.status-dot {
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px 2px rgba(0,0,0,0.2);
+}
+.status-present { background-color: #4ade80; box-shadow: 0 0 10px #4ade80; }
+.status-absent { background-color: #f87171; box-shadow: 0 0 10px #f87171; }
+
+/* --- Animations --- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out forwards;
+}
+.spinner { animation: spin 1s linear infinite; }
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.hidden { display: none !important; }
+
+/* --- Modal Backdrop --- */
+.modal-backdrop {
+    background-color: rgba(10, 5, 30, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.modal-content {
+     background: linear-gradient(135deg, #4b5563, #1f2937); /* Darker gradient for modals */
+}
