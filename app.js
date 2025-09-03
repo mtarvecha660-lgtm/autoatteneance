@@ -126,14 +126,6 @@ function loadDashboard(role) {
     }
 }
 
-document.querySelectorAll('#logout-btn, #logout-btn-teacher, #logout-btn-admin, #logout-btn-event-manager').forEach(btn => {
-    btn.addEventListener('click', () => {
-        currentUser = null;
-        document.getElementById('login-form').reset();
-        document.getElementById('login-error').textContent = '';
-        showView('login-view');
-    });
-});
 
 // --- GEMINI API (Placeholder) ---
 async function callGeminiAPI(prompt) {
@@ -571,6 +563,7 @@ function initializeApp() {
 }
 
 initializeApp();
+
 
 
 
