@@ -21,8 +21,8 @@ function setupInitialData() {
     };
     localDB.timetable = {
         classes: [
-            { classId: 'CS101', subject: 'Intro to CompSci', teacherId: 'teacher1', students: ['student1', 'student2'], time: '09:00 - 10:30' },
-            { classId: 'MA202', subject: 'Calculus II', teacherId: 'teacher1', students: ['student1', 'student2'], time: '11:30 - 13:00' }
+            { classId: 'CS101', subject: 'Intro to CompSci', teacherId: 'HCrx5lSg1TesOyroD2mS3SFo3O03', students: ['6JTIzljey8MyrE4VdxWjkss94Za2', 'student2'], time: '09:00 - 10:30' },
+            { classId: 'MA202', subject: 'Calculus II', teacherId: 'HCrx5lSg1TesOyroD2mS3SFo3O03', students: ['6JTIzljey8MyrE4VdxWjkss94Za2', 'student2'], time: '11:30 - 13:00' }
         ]
     };
     
@@ -592,3 +592,4 @@ function initializeApp() {
 }
 
 initializeApp();
+
