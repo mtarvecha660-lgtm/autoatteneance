@@ -115,16 +115,7 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 });
 
 
-// --- SIMPLE LOGOUT (Does not use Firebase Auth) ---
-document.querySelectorAll('#logout-btn, #logout-btn-teacher, #logout-btn-admin, #logout-btn-event-manager').forEach(btn => {
-    btn.addEventListener('click', () => {
-        currentUser = null;
-        if(attendanceUnsubscribe) attendanceUnsubscribe(); // Stop any live listeners
-        document.getElementById('login-form').reset();
-        document.getElementById('login-error').textContent = '';
-        showView('login-view');
-    });
-});
+
 
 function loadDashboard(role) {
     switch (role) {
@@ -580,6 +571,7 @@ function initializeApp() {
 }
 
 initializeApp();
+
 
 
 
