@@ -88,36 +88,29 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// --- MOCK LOGIN (INSECURE) THAT USES FIRESTORE ---
+// --- LOCAL LOGIN LOGIC ---
 document.getElementById('login-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value;
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
     const loginErrorEl = document.getElementById('login-error');
     loginErrorEl.textContent = '';
 
-    // Find the user in Firestore based on the entered username
-    db.collection('users').where('username', '==', username).get()
-        .then((querySnapshot) => {
-            if (querySnapshot.empty) {
-                // No user found with that username
-                loginErrorEl.textContent = 'Username not found.';
-                return;
-            }
-            
-            // Assume the first result is our user
-            const userDoc = querySnapshot.docs[0];
-            const userData = userDoc.data();
+    // Find the user entry in the localDB object
+    const userEntry = Object.entries(localDB.users).find(([id, user]) => user.username === username);
 
-            // IMPORTANT: We are NOT checking a password.
-            // This is just to identify the user and load their dashboard.
-            currentUser = { id: userDoc.id, ...userData };
-            console.log('Mock login successful for:', currentUser.name);
+    if (userEntry) {
+        const [userId, user] = userEntry;
+        if (user.password === password) {
+            // Success! Set the currentUser object with the local data
+            currentUser = { id: userId, ...user };
             loadDashboard(currentUser.role);
-        })
-        .catch((error) => {
-            console.error("Error getting user:", error);
-            loginErrorEl.textContent = 'An error occurred during login.';
-        });
+        } else {
+            loginErrorEl.textContent = 'Incorrect password.';
+        }
+    } else {
+        loginErrorEl.textContent = 'Username not found.';
+    }
 });
 
 
@@ -586,6 +579,7 @@ function initializeApp() {
 }
 
 initializeApp();
+
 
 
 
