@@ -88,53 +88,47 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
-// --- LOGIN & ROUTING ---
+// --- MOCK LOGIN (INSECURE) THAT USES FIRESTORE ---
 document.getElementById('login-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
     const loginErrorEl = document.getElementById('login-error');
     loginErrorEl.textContent = '';
 
-    // Step 1: Sign in the user with Firebase Auth
-    firebase.auth().signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            const user = userCredential.user; // The authenticated user object from Firebase
+    // Find the user in Firestore based on the entered username
+    db.collection('users').where('username', '==', username).get()
+        .then((querySnapshot) => {
+            if (querySnapshot.empty) {
+                // No user found with that username
+                loginErrorEl.textContent = 'Username not found.';
+                return;
+            }
             
-            // Step 2: Fetch the user's profile (name, role, etc.) from Firestore
-            // We use the user's unique ID (uid) from Auth to find their profile document.
-            db.collection('users').doc(user.uid).get()
-                .then((doc) => {
-                    if (doc.exists) {
-                        // Login successful
-                        currentUser = { id: doc.id, ...doc.data() };
-                        console.log('Secure login successful for:', currentUser.name);
-                        loadDashboard(currentUser.role);
-                    } else {
-                        // This can happen if a user exists in Auth but not in Firestore
-                        loginErrorEl.textContent = 'User profile not found.';
-                        firebase.auth().signOut(); // Log them out
-                    }
-                });
+            // Assume the first result is our user
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+
+            // IMPORTANT: We are NOT checking a password.
+            // This is just to identify the user and load their dashboard.
+            currentUser = { id: userDoc.id, ...userData };
+            console.log('Mock login successful for:', currentUser.name);
+            loadDashboard(currentUser.role);
         })
         .catch((error) => {
-            // Handle errors from Firebase Auth (e.g., wrong password, user not found)
-            loginErrorEl.textContent = error.message;
+            console.error("Error getting user:", error);
+            loginErrorEl.textContent = 'An error occurred during login.';
         });
 });
 
 
-// --- SECURE LOGOUT ---
+// --- SIMPLE LOGOUT (Does not use Firebase Auth) ---
 document.querySelectorAll('#logout-btn, #logout-btn-teacher, #logout-btn-admin, #logout-btn-event-manager').forEach(btn => {
     btn.addEventListener('click', () => {
-        firebase.auth().signOut().then(() => {
-            // When logout is successful
-            currentUser = null;
-            if(attendanceUnsubscribe) attendanceUnsubscribe(); // Stop any live listeners
-            document.getElementById('login-form').reset();
-            document.getElementById('login-error').textContent = '';
-            showView('login-view');
-        });
+        currentUser = null;
+        if(attendanceUnsubscribe) attendanceUnsubscribe(); // Stop any live listeners
+        document.getElementById('login-form').reset();
+        document.getElementById('login-error').textContent = '';
+        showView('login-view');
     });
 });
 
@@ -592,4 +586,5 @@ function initializeApp() {
 }
 
 initializeApp();
+
 
