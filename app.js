@@ -19,12 +19,13 @@ function setupInitialData() {
         'admin1': { username: 'admin', password: 'pass', name: 'Principal Smith', role: 'admin' },
         'eventmgr1': { username: 'eventmgr', password: 'pass', name: 'Chris Green', role: 'event-manager' }
     };
-    localDB.timetable = {
-        classes: [
-            { classId: 'CS101', subject: 'Intro to CompSci', teacherId: 'teacher1', students: ['student1', 'student2'], time: '09:00 - 10:30' },
-            { classId: 'MA202', subject: 'Calculus II', teacherId: 'teacher1', students: ['student1', 'student2'], time: '11:30 - 13:00' } 'student2'], time: '11:30 - 13:00' }
-        ]
-    };
+    // Inside setupInitialData() function
+localDB.timetable = {
+    classes: [
+        { classId: 'CS101', subject: 'Intro to CompSci', teacherId: 'teacher1', students: ['student1', 'student2'], time: '09:00 - 10:30' },
+        { classId: 'MA202', subject: 'Calculus II', teacherId: 'teacher1', students: ['student1', 'student2'], time: '11:30 - 13:00' }
+    ]
+};
     
     // Sample Events for testing
     const today = new Date();
@@ -579,6 +580,7 @@ function initializeApp() {
 }
 
 initializeApp();
+
 
 
 
