@@ -91,21 +91,51 @@ function showToast(message, type = 'success') {
 // --- LOGIN & ROUTING ---
 document.getElementById('login-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const userEntry = Object.entries(localDB.users).find(([id, user]) => user.username === username);
+    const loginErrorEl = document.getElementById('login-error');
+    loginErrorEl.textContent = '';
 
-    if (userEntry) {
-        const [userId, user] = userEntry;
-        if (user.password === password) {
-            currentUser = { id: userId, ...user };
-            loadDashboard(currentUser.role);
-        } else {
-            document.getElementById('login-error').textContent = 'Incorrect password.';
-        }
-    } else {
-        document.getElementById('login-error').textContent = 'Username not found.';
-    }
+    // Step 1: Sign in the user with Firebase Auth
+    firebase.auth().signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            const user = userCredential.user; // The authenticated user object from Firebase
+            
+            // Step 2: Fetch the user's profile (name, role, etc.) from Firestore
+            // We use the user's unique ID (uid) from Auth to find their profile document.
+            db.collection('users').doc(user.uid).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        // Login successful
+                        currentUser = { id: doc.id, ...doc.data() };
+                        console.log('Secure login successful for:', currentUser.name);
+                        loadDashboard(currentUser.role);
+                    } else {
+                        // This can happen if a user exists in Auth but not in Firestore
+                        loginErrorEl.textContent = 'User profile not found.';
+                        firebase.auth().signOut(); // Log them out
+                    }
+                });
+        })
+        .catch((error) => {
+            // Handle errors from Firebase Auth (e.g., wrong password, user not found)
+            loginErrorEl.textContent = error.message;
+        });
+});
+
+
+// --- SECURE LOGOUT ---
+document.querySelectorAll('#logout-btn, #logout-btn-teacher, #logout-btn-admin, #logout-btn-event-manager').forEach(btn => {
+    btn.addEventListener('click', () => {
+        firebase.auth().signOut().then(() => {
+            // When logout is successful
+            currentUser = null;
+            if(attendanceUnsubscribe) attendanceUnsubscribe(); // Stop any live listeners
+            document.getElementById('login-form').reset();
+            document.getElementById('login-error').textContent = '';
+            showView('login-view');
+        });
+    });
 });
 
 function loadDashboard(role) {
@@ -560,4 +590,5 @@ function initializeApp() {
     localStorage.removeItem('activeQrTokens');
     setTimeout(() => showView('login-view'), 500);
 }
+
 initializeApp();
